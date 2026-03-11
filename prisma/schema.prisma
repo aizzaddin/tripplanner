@@ -1,0 +1,208 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  BANNED
+}
+
+model User {
+  id        String     @id @default(cuid())
+  name      String
+  email     String     @unique
+  password  String
+  role      Role       @default(USER)
+  status    UserStatus @default(PENDING)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  trips Trip[]
+
+  @@map("users")
+}
+
+model SettlementPayment {
+  id           String   @id @default(cuid())
+  amount       Float
+  note         String?
+  createdAt    DateTime @default(now())
+
+  tripId       String
+  trip         Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  fromMemberId String
+  fromMember   Member   @relation("PaymentFrom", fields: [fromMemberId], references: [id], onDelete: Cascade)
+
+  toMemberId   String
+  toMember     Member   @relation("PaymentTo", fields: [toMemberId], references: [id], onDelete: Cascade)
+
+  @@map("settlement_payments")
+}
+
+model Trip {
+  id        String   @id @default(cuid())
+  name      String
+  currency  String   @default("IDR")
+  startDate DateTime
+  endDate   DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  shareToken String?  @unique
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  members             Member[]
+  expenses            Expense[]
+  budgetPlans         BudgetPlan[]
+  itineraries         ItineraryDay[]
+  todos               TodoItem[]
+  packingItems        PackingItem[]
+  settlementPayments  SettlementPayment[]
+
+  @@map("trips")
+}
+
+enum MemberCategory {
+  ADULT
+  CHILD
+  BABY
+}
+
+model Member {
+  id       String         @id @default(cuid())
+  name     String
+  category MemberCategory @default(ADULT)
+  color    String         @default("#6366f1")
+
+  tripId String
+  trip   Trip   @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  paidExpenses      Expense[]           @relation("ExpensePaidBy")
+  splitExpenses     ExpenseSplit[]
+  assignedTodos     TodoItem[]
+  packingItems      PackingItem[]
+  paymentsFrom      SettlementPayment[] @relation("PaymentFrom")
+  paymentsTo        SettlementPayment[] @relation("PaymentTo")
+
+  @@map("members")
+}
+
+enum PaymentMethod {
+  CASH
+  DEBIT
+  CREDIT
+  TRANSFER
+  QRIS
+}
+
+enum PaymentStatus {
+  SPLIT_EQUAL
+  PERSONAL
+}
+
+model Expense {
+  id            String        @id @default(cuid())
+  date          DateTime
+  category      String
+  description   String
+  qty           Float?
+  unitCost      Float
+  paymentMethod PaymentMethod @default(CASH)
+  paymentStatus PaymentStatus @default(SPLIT_EQUAL)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  tripId String
+  trip   Trip   @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  paidById String
+  paidBy   Member @relation("ExpensePaidBy", fields: [paidById], references: [id])
+
+  splitWith ExpenseSplit[]
+
+  @@map("expenses")
+}
+
+model ExpenseSplit {
+  expenseId String
+  memberId  String
+
+  expense Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  member  Member  @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@id([expenseId, memberId])
+  @@map("expense_splits")
+}
+
+model BudgetPlan {
+  id          String @id @default(cuid())
+  category    String
+  plannedCost Float
+
+  tripId String
+  trip   Trip   @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@map("budget_plans")
+}
+
+model ItineraryDay {
+  id            String  @id @default(cuid())
+  dayNumber     Int
+  mainArea      String?
+  accommodation String?
+  activities    Json    @default("[]")
+  todos         Json    @default("[]")
+  notes         Json    @default("[]")
+
+  tripId String
+  trip   Trip   @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@unique([tripId, dayNumber])
+  @@map("itinerary_days")
+}
+
+model TodoItem {
+  id        String    @id @default(cuid())
+  task      String
+  isDone    Boolean   @default(false)
+  priority  String    @default("MEDIUM")
+  dueDate   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  tripId String
+  trip   Trip   @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  assignedToId String?
+  assignedTo   Member? @relation(fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  @@map("todo_items")
+}
+
+model PackingItem {
+  id     String  @id @default(cuid())
+  item   String
+  qty    Int     @default(1)
+  isDone Boolean @default(false)
+
+  tripId String
+  trip   Trip   @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  assignedToId String?
+  assignedTo   Member? @relation(fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  @@map("packing_items")
+}
