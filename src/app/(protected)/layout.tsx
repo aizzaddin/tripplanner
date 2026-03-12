@@ -27,7 +27,7 @@ export default async function ProtectedLayout({
   return (
     <div className="flex min-h-screen">
       {/* Sidebar — desktop only */}
-      <aside className="hidden md:flex w-64 bg-card border-r flex-col shrink-0">
+      <aside className="hidden md:flex w-64 bg-card border-r flex-col shrink-0 sticky top-0 h-screen overflow-y-auto">
         <div className="p-6 border-b">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">

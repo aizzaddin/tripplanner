@@ -2,6 +2,7 @@ import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { computeBalances, computeSettlements, computeTotal, adjustBalancesForPayments } from "@/lib/business/expense"
+
 import ExpensesView from "@/components/expenses-view"
 
 interface ExpensesPageProps {
@@ -39,20 +40,18 @@ export default async function ExpensesPage({ params }: ExpensesPageProps) {
     }),
   ])
 
-  const rawBalances = computeBalances(
-    expenses.map((e) => ({
-      id: e.id,
-      qty: e.qty,
-      unitCost: e.unitCost,
-      paymentStatus: e.paymentStatus,
-      paidById: e.paidById,
-      splitWith: e.splitWith.map((s) => ({ memberId: s.memberId })),
-    })),
-    trip.members
-  )
+  const expensesForCalc = expenses.map((e) => ({
+    id: e.id,
+    qty: e.qty,
+    unitCost: e.unitCost,
+    paymentStatus: e.paymentStatus,
+    paidById: e.paidById,
+    splitWith: e.splitWith.map((s) => ({ memberId: s.memberId })),
+  }))
 
+  const rawBalances = computeBalances(expensesForCalc, trip.members)
   const balances = adjustBalancesForPayments(rawBalances, settlementPayments)
-  const settlements = computeSettlements(balances)
+  const settlements = computeSettlements(expensesForCalc, trip.members, settlementPayments)
   const totalExpenses = expenses.reduce((sum, e) => sum + computeTotal(e.qty, e.unitCost), 0)
 
   return (

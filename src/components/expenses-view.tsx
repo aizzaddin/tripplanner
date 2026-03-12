@@ -445,112 +445,149 @@ export default function ExpensesView({
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {settlements.length === 0 ? (
-                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground py-2">
-                    <Icon icon="lucide:check-circle" className="w-4 h-4 text-green-500" />
-                    All settled up!
-                  </div>
-                ) : (
-                  settlements.map((s, i) => {
-                    const pairKey = `${s.fromId}-${s.toId}`
-                    const pairPayments = settlementPayments.filter(
-                      (p) => p.fromMemberId === s.fromId && p.toMemberId === s.toId
-                    )
-                    const totalPaid = pairPayments.reduce((sum, p) => sum + p.amount, 0)
-                    const isLogging = logPaymentFor === pairKey
+                {(() => {
+                  // Build settled pairs: pairs with payment history that are no longer in active settlements
+                  const activePairKeys = new Set(settlements.map(s => `${s.fromId}-${s.toId}`))
+                  const settledPairMap = new Map<string, { fromId: string; fromName: string; toId: string; toName: string }>()
+                  for (const p of settlementPayments) {
+                    const key = `${p.fromMemberId}-${p.toMemberId}`
+                    if (!activePairKeys.has(key) && !settledPairMap.has(key)) {
+                      settledPairMap.set(key, {
+                        fromId: p.fromMemberId,
+                        fromName: p.fromMember.name,
+                        toId: p.toMemberId,
+                        toName: p.toMember.name,
+                      })
+                    }
+                  }
+                  const settledPairs = [...settledPairMap.values()]
+                  const hasAnything = settlements.length > 0 || settledPairs.length > 0
 
+                  if (!hasAnything) {
                     return (
-                      <div key={i} className="space-y-2 pb-3 border-b last:border-0 last:pb-0">
-                        {/* Settlement header */}
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-1.5 text-sm flex-wrap">
-                            <MemberAvatar name={s.fromName} color={members.find(m => m.id === s.fromId)?.color ?? "#6366f1"} size="xs" />
-                            <span className="font-medium">{s.fromName}</span>
-                            <Icon icon="lucide:arrow-right" className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                            <MemberAvatar name={s.toName} color={members.find(m => m.id === s.toId)?.color ?? "#6366f1"} size="xs" />
-                            <span className="font-medium">{s.toName}</span>
-                          </div>
-                          <span className="text-sm font-bold text-primary tabular-nums shrink-0">
-                            {formatCurrency(s.amount)}
-                          </span>
-                        </div>
+                      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground py-2">
+                        <Icon icon="lucide:check-circle" className="w-4 h-4 text-green-500" />
+                        All settled up!
+                      </div>
+                    )
+                  }
 
-                        {/* Logged payments */}
-                        {pairPayments.map((p) => (
+                  const renderPaymentLog = (fromId: string, toId: string) => {
+                    const logs = settlementPayments.filter(p => p.fromMemberId === fromId && p.toMemberId === toId)
+                    if (logs.length === 0) return null
+                    return (
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground font-medium">Payment log</p>
+                        {logs.map((p) => (
                           <div key={p.id} className="flex items-center justify-between text-xs text-muted-foreground bg-muted/50 rounded px-2 py-1">
-                            <div className="flex items-center gap-1.5">
-                              <Icon icon="lucide:check" className="w-3 h-3 text-green-500" />
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <Icon icon="lucide:check" className="w-3 h-3 text-green-500 shrink-0" />
                               <span className="tabular-nums">{formatCurrency(p.amount)} paid</span>
                               {p.note && <span className="italic">· {p.note}</span>}
-                              <span>· {format(new Date(p.createdAt), "MMM d")}</span>
+                              <span className="text-muted-foreground/60">· {format(new Date(p.createdAt), "MMM d")}</span>
                             </div>
                             <button
                               onClick={() => handleDeletePayment(p.id)}
-                              className="text-muted-foreground hover:text-destructive ml-2"
+                              className="text-muted-foreground hover:text-destructive ml-2 shrink-0"
                             >
                               <Icon icon="lucide:x" className="w-3 h-3" />
                             </button>
                           </div>
                         ))}
-
-                        {totalPaid > 0 && (
-                          <p className="text-xs text-green-600 font-medium">
-                            {formatCurrency(totalPaid)} already paid
-                          </p>
-                        )}
-
-                        {/* Log payment toggle */}
-                        {isLogging ? (
-                          <div className="space-y-2">
-                            <input
-                              type="number"
-                              placeholder={`Amount (max ${s.amount.toLocaleString()})`}
-                              value={logAmount}
-                              onChange={(e) => setLogAmount(e.target.value)}
-                              className="w-full text-xs border border-input rounded px-2 py-1.5 bg-background"
-                            />
-                            <input
-                              type="text"
-                              placeholder="Note (optional)"
-                              value={logNote}
-                              onChange={(e) => setLogNote(e.target.value)}
-                              className="w-full text-xs border border-input rounded px-2 py-1.5 bg-background"
-                            />
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                className="h-7 text-xs flex-1"
-                                onClick={() => handleLogPayment(s.fromId, s.toId)}
-                                disabled={logLoading || !logAmount}
-                              >
-                                <Icon icon="lucide:check" className="w-3 h-3 mr-1" />
-                                Confirm
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-7 text-xs"
-                                onClick={() => { setLogPaymentFor(null); setLogAmount(""); setLogNote("") }}
-                              >
-                                Cancel
-                              </Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-7 text-xs gap-1.5 w-full"
-                            onClick={() => { setLogPaymentFor(pairKey); setLogAmount(String(s.amount)) }}
-                          >
-                            <Icon icon="lucide:plus" className="w-3 h-3" />
-                            Log Payment
-                          </Button>
-                        )}
                       </div>
                     )
-                  })
-                )}
+                  }
+
+                  return (
+                    <>
+                      {/* Active settlements */}
+                      {settlements.map((s) => {
+                        const pairKey = `${s.fromId}-${s.toId}`
+                        const pairPayments = settlementPayments.filter(p => p.fromMemberId === s.fromId && p.toMemberId === s.toId)
+                        const totalPaid = pairPayments.reduce((sum, p) => sum + p.amount, 0)
+                        const isLogging = logPaymentFor === pairKey
+
+                        return (
+                          <div key={pairKey} className="space-y-2 pb-3 border-b last:border-0 last:pb-0">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-1.5 text-sm flex-wrap">
+                                <MemberAvatar name={s.fromName} color={members.find(m => m.id === s.fromId)?.color ?? "#6366f1"} size="xs" />
+                                <span className="font-medium">{s.fromName}</span>
+                                <Icon icon="lucide:arrow-right" className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                                <MemberAvatar name={s.toName} color={members.find(m => m.id === s.toId)?.color ?? "#6366f1"} size="xs" />
+                                <span className="font-medium">{s.toName}</span>
+                              </div>
+                              <span className="text-sm font-bold text-primary tabular-nums shrink-0">
+                                {formatCurrency(s.amount)}
+                              </span>
+                            </div>
+
+                            {renderPaymentLog(s.fromId, s.toId)}
+
+                            {totalPaid > 0 && (
+                              <p className="text-xs text-green-600 font-medium">
+                                {formatCurrency(totalPaid)} already paid
+                              </p>
+                            )}
+
+                            {isLogging ? (
+                              <div className="space-y-2">
+                                <input
+                                  type="number"
+                                  placeholder={`Amount (max ${s.amount.toLocaleString()})`}
+                                  value={logAmount}
+                                  onChange={(e) => setLogAmount(e.target.value)}
+                                  className="w-full text-xs border border-input rounded px-2 py-1.5 bg-background"
+                                />
+                                <input
+                                  type="text"
+                                  placeholder="Note (optional)"
+                                  value={logNote}
+                                  onChange={(e) => setLogNote(e.target.value)}
+                                  className="w-full text-xs border border-input rounded px-2 py-1.5 bg-background"
+                                />
+                                <div className="flex gap-2">
+                                  <Button size="sm" className="h-7 text-xs flex-1" onClick={() => handleLogPayment(s.fromId, s.toId)} disabled={logLoading || !logAmount}>
+                                    <Icon icon="lucide:check" className="w-3 h-3 mr-1" />
+                                    Confirm
+                                  </Button>
+                                  <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => { setLogPaymentFor(null); setLogAmount(""); setLogNote("") }}>
+                                    Cancel
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <Button size="sm" variant="outline" className="h-7 text-xs gap-1.5 w-full" onClick={() => { setLogPaymentFor(pairKey); setLogAmount(String(s.amount)) }}>
+                                <Icon icon="lucide:plus" className="w-3 h-3" />
+                                Log Payment
+                              </Button>
+                            )}
+                          </div>
+                        )
+                      })}
+
+                      {/* Fully settled pairs with payment history */}
+                      {settledPairs.map((pair) => (
+                        <div key={`${pair.fromId}-${pair.toId}`} className="space-y-2 pb-3 border-b last:border-0 last:pb-0 opacity-75">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-1.5 text-sm flex-wrap">
+                              <MemberAvatar name={pair.fromName} color={members.find(m => m.id === pair.fromId)?.color ?? "#6366f1"} size="xs" />
+                              <span className="font-medium">{pair.fromName}</span>
+                              <Icon icon="lucide:arrow-right" className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                              <MemberAvatar name={pair.toName} color={members.find(m => m.id === pair.toId)?.color ?? "#6366f1"} size="xs" />
+                              <span className="font-medium">{pair.toName}</span>
+                            </div>
+                            <Badge variant="secondary" className="text-xs text-green-600 bg-green-50 shrink-0">
+                              <Icon icon="lucide:check-circle" className="w-3 h-3 mr-1" />
+                              Settled
+                            </Badge>
+                          </div>
+                          {renderPaymentLog(pair.fromId, pair.toId)}
+                        </div>
+                      ))}
+                    </>
+                  )
+                })()}
               </CardContent>
             </Card>
           )}

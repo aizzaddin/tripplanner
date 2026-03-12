@@ -34,20 +34,18 @@ export async function GET(
       }),
     ])
 
-    const rawBalances = computeBalances(
-      expenses.map((expense) => ({
-        id: expense.id,
-        qty: expense.qty,
-        unitCost: expense.unitCost,
-        paymentStatus: expense.paymentStatus,
-        paidById: expense.paidById,
-        splitWith: expense.splitWith.map((split) => ({ memberId: split.memberId })),
-      })),
-      members
-    )
+    const expensesForCalc = expenses.map((expense) => ({
+      id: expense.id,
+      qty: expense.qty,
+      unitCost: expense.unitCost,
+      paymentStatus: expense.paymentStatus,
+      paidById: expense.paidById,
+      splitWith: expense.splitWith.map((split) => ({ memberId: split.memberId })),
+    }))
 
+    const rawBalances = computeBalances(expensesForCalc, members)
     const balances = adjustBalancesForPayments(rawBalances, settlementPayments)
-    const settlements = computeSettlements(balances)
+    const settlements = computeSettlements(expensesForCalc, members, settlementPayments)
 
     const taskStats = computeTodoStats(
       todos.map((todo) => ({

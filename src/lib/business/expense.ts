@@ -103,46 +103,58 @@ export function adjustBalancesForPayments(
   return adjusted
 }
 
-export function computeSettlements(balances: BalanceEntry[]): Settlement[] {
-  const settlements: Settlement[] = []
+/**
+ * Computes direct pair-by-pair debts from each expense.
+ * Unlike the greedy algorithm, this preserves every individual debt relationship
+ * so e.g. "B paid for C and D" always shows C→B and D→B even if B also owes A.
+ * Logged settlement payments are subtracted from their specific pair.
+ */
+export function computeSettlements(
+  expenses: Array<{
+    qty: number | null
+    unitCost: number
+    paymentStatus: string
+    paidById: string
+    splitWith: Array<{ memberId: string }>
+  }>,
+  members: Array<{ id: string; name: string }>,
+  payments: Array<{ fromMemberId: string; toMemberId: string; amount: number }> = []
+): Settlement[] {
+  const memberMap = new Map(members.map((m) => [m.id, m.name]))
+  const debtMap = new Map<string, number>()
 
-  // Creditors: balance > 0 (they should receive money)
-  const creditors = balances
-    .filter((b) => b.balance > 0.005)
-    .map((b) => ({ ...b }))
-    .sort((a, b) => b.balance - a.balance)
-
-  // Debtors: balance < 0 (they owe money)
-  const debtors = balances
-    .filter((b) => b.balance < -0.005)
-    .map((b) => ({ ...b }))
-    .sort((a, b) => a.balance - b.balance) // most negative first
-
-  let ci = 0
-  let di = 0
-
-  while (ci < creditors.length && di < debtors.length) {
-    const creditor = creditors[ci]
-    const debtor = debtors[di]
-
-    const amount = Math.min(creditor.balance, -debtor.balance)
-
-    if (amount > 0.005) {
-      settlements.push({
-        fromId: debtor.memberId,
-        fromName: debtor.memberName,
-        toId: creditor.memberId,
-        toName: creditor.memberName,
-        amount: Math.round(amount * 100) / 100,
-      })
+  // Accumulate raw debts per pair from each split expense
+  for (const expense of expenses) {
+    if (expense.paymentStatus !== "SPLIT_EQUAL" || expense.splitWith.length === 0) continue
+    const total = computeTotal(expense.qty, expense.unitCost)
+    const sharePerPerson = total / expense.splitWith.length
+    for (const split of expense.splitWith) {
+      if (split.memberId === expense.paidById) continue // payer doesn't owe themselves
+      const key = `${split.memberId}|${expense.paidById}`
+      debtMap.set(key, (debtMap.get(key) ?? 0) + sharePerPerson)
     }
-
-    creditor.balance -= amount
-    debtor.balance += amount
-
-    if (Math.abs(creditor.balance) < 0.005) ci++
-    if (Math.abs(debtor.balance) < 0.005) di++
   }
 
-  return settlements
+  // Subtract logged payments from the corresponding pair
+  for (const payment of payments) {
+    const key = `${payment.fromMemberId}|${payment.toMemberId}`
+    const current = debtMap.get(key) ?? 0
+    debtMap.set(key, Math.max(0, current - payment.amount))
+  }
+
+  // Build result — only pairs with outstanding debt
+  const result: Settlement[] = []
+  for (const [key, amount] of debtMap) {
+    if (amount <= 0.005) continue
+    const [fromId, toId] = key.split("|")
+    result.push({
+      fromId,
+      fromName: memberMap.get(fromId) ?? fromId,
+      toId,
+      toName: memberMap.get(toId) ?? toId,
+      amount: Math.round(amount * 100) / 100,
+    })
+  }
+
+  return result
 }

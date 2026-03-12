@@ -44,6 +44,11 @@ export default async function SharePage({ params }: SharePageProps) {
     }),
     prisma.settlementPayment.findMany({
       where: { trip: { shareToken: token } },
+      include: {
+        fromMember: { select: { id: true, name: true, color: true } },
+        toMember: { select: { id: true, name: true, color: true } },
+      },
+      orderBy: { createdAt: "asc" },
     }),
   ])
 
@@ -104,7 +109,7 @@ export default async function SharePage({ params }: SharePageProps) {
 
   const rawBalances = computeBalances(expensesForBalances, trip.members)
   const balances = adjustBalancesForPayments(rawBalances, settlementPayments)
-  const settlements = computeSettlements(balances)
+  const settlements = computeSettlements(expensesForBalances, trip.members, settlementPayments)
 
   const totalExpenses = trip.expenses.reduce(
     (sum, e) => sum + computeTotal(e.qty, e.unitCost),
@@ -403,36 +408,133 @@ export default async function SharePage({ params }: SharePageProps) {
             </Card>
 
             <div className="space-y-4">
-              {settlements.length > 0 ? (
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base">Settlements</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    {settlements.map((s, i) => (
-                      <div key={i} className="text-sm">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-medium">{s.fromName}</span>
-                          <Icon icon="lucide:arrow-right" className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                          <span className="font-medium">{s.toName}</span>
+              {(() => {
+                const memberColorMap = new Map(trip.members.map(m => [m.id, m.color]))
+                const activePairKeys = new Set(settlements.map(s => `${s.fromId}-${s.toId}`))
+                const settledPairMap = new Map<string, { fromId: string; fromName: string; toId: string; toName: string }>()
+                for (const p of settlementPayments) {
+                  const key = `${p.fromMemberId}-${p.toMemberId}`
+                  if (!activePairKeys.has(key) && !settledPairMap.has(key)) {
+                    settledPairMap.set(key, {
+                      fromId: p.fromMemberId,
+                      fromName: p.fromMember.name,
+                      toId: p.toMemberId,
+                      toName: p.toMember.name,
+                    })
+                  }
+                }
+                const settledPairs = [...settledPairMap.values()]
+                const hasAnything = settlements.length > 0 || settledPairs.length > 0
+
+                const renderPaymentLog = (fromId: string, toId: string) => {
+                  const logs = settlementPayments.filter(p => p.fromMemberId === fromId && p.toMemberId === toId)
+                  if (logs.length === 0) return null
+                  return (
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground font-medium">Payment log</p>
+                      {logs.map((p) => (
+                        <div key={p.id} className="flex items-center text-xs text-muted-foreground bg-muted/50 rounded px-2 py-1 gap-1.5 flex-wrap">
+                          <Icon icon="lucide:check" className="w-3 h-3 text-green-500 shrink-0" />
+                          <span className="tabular-nums">{formatCurrency(p.amount)} paid</span>
+                          {p.note && <span className="italic">· {p.note}</span>}
+                          <span className="text-muted-foreground/60">· {format(new Date(p.createdAt), "MMM d")}</span>
                         </div>
-                        <div className="text-primary font-semibold">
-                          {formatCurrency(s.amount)}
-                        </div>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              ) : balances.length > 0 ? (
-                <Card>
-                  <CardContent className="py-4">
-                    <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                      <Icon icon="lucide:check-circle" className="w-4 h-4 text-green-500" />
-                      All settled up!
+                      ))}
                     </div>
-                  </CardContent>
-                </Card>
-              ) : null}
+                  )
+                }
+
+                if (!hasAnything) {
+                  return balances.length > 0 ? (
+                    <Card>
+                      <CardContent className="py-4">
+                        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                          <Icon icon="lucide:check-circle" className="w-4 h-4 text-green-500" />
+                          All settled up!
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ) : null
+                }
+
+                return (
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Icon icon="lucide:handshake" className="w-4 h-4" />
+                        Settlements
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {settlements.map((s) => {
+                        const pairPayments = settlementPayments.filter(p => p.fromMemberId === s.fromId && p.toMemberId === s.toId)
+                        const totalPaid = pairPayments.reduce((sum, p) => sum + p.amount, 0)
+                        return (
+                          <div key={`${s.fromId}-${s.toId}`} className="space-y-2 pb-3 border-b last:border-0 last:pb-0">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-1.5 text-sm flex-wrap">
+                                <span
+                                  className="w-5 h-5 rounded-full text-white text-[10px] font-medium flex items-center justify-center shrink-0"
+                                  style={{ backgroundColor: memberColorMap.get(s.fromId) ?? "#6366f1" }}
+                                >
+                                  {s.fromName[0]}
+                                </span>
+                                <span className="font-medium">{s.fromName}</span>
+                                <Icon icon="lucide:arrow-right" className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                                <span
+                                  className="w-5 h-5 rounded-full text-white text-[10px] font-medium flex items-center justify-center shrink-0"
+                                  style={{ backgroundColor: memberColorMap.get(s.toId) ?? "#6366f1" }}
+                                >
+                                  {s.toName[0]}
+                                </span>
+                                <span className="font-medium">{s.toName}</span>
+                              </div>
+                              <span className="text-sm font-bold text-primary tabular-nums shrink-0">
+                                {formatCurrency(s.amount)}
+                              </span>
+                            </div>
+                            {renderPaymentLog(s.fromId, s.toId)}
+                            {totalPaid > 0 && (
+                              <p className="text-xs text-green-600 font-medium">
+                                {formatCurrency(totalPaid)} already paid
+                              </p>
+                            )}
+                          </div>
+                        )
+                      })}
+
+                      {settledPairs.map((pair) => (
+                        <div key={`${pair.fromId}-${pair.toId}`} className="space-y-2 pb-3 border-b last:border-0 last:pb-0 opacity-75">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-1.5 text-sm flex-wrap">
+                              <span
+                                className="w-5 h-5 rounded-full text-white text-[10px] font-medium flex items-center justify-center shrink-0"
+                                style={{ backgroundColor: memberColorMap.get(pair.fromId) ?? "#6366f1" }}
+                              >
+                                {pair.fromName[0]}
+                              </span>
+                              <span className="font-medium">{pair.fromName}</span>
+                              <Icon icon="lucide:arrow-right" className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                              <span
+                                className="w-5 h-5 rounded-full text-white text-[10px] font-medium flex items-center justify-center shrink-0"
+                                style={{ backgroundColor: memberColorMap.get(pair.toId) ?? "#6366f1" }}
+                              >
+                                {pair.toName[0]}
+                              </span>
+                              <span className="font-medium">{pair.toName}</span>
+                            </div>
+                            <Badge variant="secondary" className="text-xs text-green-600 bg-green-50 shrink-0">
+                              <Icon icon="lucide:check-circle" className="w-3 h-3 mr-1" />
+                              Settled
+                            </Badge>
+                          </div>
+                          {renderPaymentLog(pair.fromId, pair.toId)}
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                )
+              })()}
             </div>
           </div>
         </section>

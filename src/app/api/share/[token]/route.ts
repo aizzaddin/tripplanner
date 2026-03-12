@@ -75,7 +75,7 @@ export async function GET(
     }))
 
     const balances = computeBalances(expensesForBalances, trip.members)
-    const settlements = computeSettlements(balances)
+    const settlements = computeSettlements(expensesForBalances, trip.members)
 
     return NextResponse.json({
       trip: {
