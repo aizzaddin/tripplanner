@@ -43,6 +43,8 @@ interface Member {
 interface ExpenseFormProps {
   tripId: string
   members: Member[]
+  categories?: string[]
+  enabledPaymentMethods?: string[]
   defaultValues?: Partial<FormValues>
   onSubmit: (data: FormValues) => Promise<void>
   loading?: boolean
@@ -52,12 +54,17 @@ interface ExpenseFormProps {
 
 export default function ExpenseForm({
   members,
+  categories = EXPENSE_CATEGORIES,
+  enabledPaymentMethods,
   defaultValues,
   onSubmit,
   loading,
   error,
   submitLabel = "Save",
 }: ExpenseFormProps) {
+  const availablePaymentMethods = enabledPaymentMethods
+    ? PAYMENT_METHODS.filter((pm) => enabledPaymentMethods.includes(pm.value))
+    : PAYMENT_METHODS
   const {
     register,
     handleSubmit,
@@ -122,7 +129,7 @@ export default function ExpenseForm({
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
             <SelectContent>
-              {EXPENSE_CATEGORIES.map((c) => (
+              {categories.map((c) => (
                 <SelectItem key={c} value={c}>{c}</SelectItem>
               ))}
             </SelectContent>
@@ -202,7 +209,7 @@ export default function ExpenseForm({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {PAYMENT_METHODS.map((pm) => (
+              {availablePaymentMethods.map((pm) => (
                 <SelectItem key={pm.value} value={pm.value}>{pm.label}</SelectItem>
               ))}
             </SelectContent>
@@ -216,7 +223,7 @@ export default function ExpenseForm({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="SPLIT_EQUAL">Split Equal</SelectItem>
+              <SelectItem value="SPLIT_EQUAL">Split</SelectItem>
               <SelectItem value="PERSONAL">Personal</SelectItem>
             </SelectContent>
           </Select>

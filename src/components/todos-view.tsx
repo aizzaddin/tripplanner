@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { format } from "date-fns"
+import { useGsapEntrance } from "@/lib/hooks/use-gsap-entrance"
 import { computeUrgency } from "@/lib/business/todo"
 import type { UrgencyLabel } from "@/lib/business/todo"
 import { TODO_PRIORITIES } from "@/lib/constants"
@@ -60,6 +61,7 @@ const urgencyVariant: Record<string, "destructive" | "default" | "secondary" | "
 }
 
 export default function TodosView({ tripId, members, initialTodos }: TodosViewProps) {
+  const containerRef = useGsapEntrance()
   const [todos, setTodos] = useState(initialTodos)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editTodo, setEditTodo] = useState<TodoItem | null>(null)
@@ -167,8 +169,8 @@ export default function TodosView({ tripId, members, initialTodos }: TodosViewPr
   const doneTodos = todos.filter((t) => t.isDone)
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div ref={containerRef} className="space-y-6">
+      <div className="gsap-enter flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold">To-Do List</h2>
           <p className="text-sm text-muted-foreground">
@@ -183,7 +185,7 @@ export default function TodosView({ tripId, members, initialTodos }: TodosViewPr
           No tasks yet. Add your first one!
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="gsap-enter space-y-6">
           {/* Pending todos grouped by urgency */}
           {pendingByGroup.map(([label, items]) => {
             const pending = items.filter((t) => !t.isDone)

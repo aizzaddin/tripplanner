@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useForm } from "react-hook-form"
+import { useGsapEntrance } from "@/lib/hooks/use-gsap-entrance"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { signIn } from "next-auth/react"
 import Link from "next/link"
@@ -17,6 +18,7 @@ type LoginFormValues = {
 }
 
 export default function LoginPage() {
+  const containerRef = useGsapEntrance()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -47,14 +49,14 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+    <div ref={containerRef} className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
+        <div className="gsap-enter text-center mb-8">
           <h1 className="text-3xl font-bold tracking-tight">Trip Planner</h1>
           <p className="text-muted-foreground mt-2">Plan your adventures together</p>
         </div>
 
-        <Card>
+        <Card className="gsap-enter">
           <CardHeader>
             <CardTitle>Sign in</CardTitle>
             <CardDescription>Enter your email and password to access your trips</CardDescription>
@@ -102,7 +104,7 @@ export default function LoginPage() {
 
               <p className="text-sm text-muted-foreground text-center">
                 Don&apos;t have an account?{" "}
-                <Link href="/auth/register" className="text-primary font-medium hover:underline">
+                <Link href="/register" className="text-primary font-medium hover:underline">
                   Create one
                 </Link>
               </p>

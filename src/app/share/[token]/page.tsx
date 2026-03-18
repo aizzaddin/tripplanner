@@ -161,7 +161,7 @@ export default async function SharePage({ params }: SharePageProps) {
             Want to plan your own trip?
           </span>
           <Link
-            href="/auth/register"
+            href="/register"
             className="text-sm font-medium text-primary hover:underline flex items-center gap-1"
           >
             Sign up free
@@ -374,7 +374,7 @@ export default async function SharePage({ params }: SharePageProps) {
                               <div className="flex items-center justify-between text-xs text-muted-foreground">
                                 <span className="flex items-center gap-1">
                                   <Icon icon="lucide:users" className="w-3 h-3" />
-                                  Split share
+                                  Pay back
                                 </span>
                                 <span className="tabular-nums">{formatCurrency(b.splitShare)}</span>
                               </div>
@@ -383,7 +383,7 @@ export default async function SharePage({ params }: SharePageProps) {
                               <div className="flex items-center justify-between text-xs text-muted-foreground border-t pt-1 mt-1">
                                 <span className="flex items-center gap-1">
                                   <Icon icon="lucide:split" className="w-3 h-3" />
-                                  Split forwarded
+                                  Get back
                                 </span>
                                 <span className="tabular-nums">{formatCurrency(b.splitPaid)}</span>
                               </div>
@@ -392,7 +392,7 @@ export default async function SharePage({ params }: SharePageProps) {
                               <div className="flex items-center justify-between text-xs font-medium border-t pt-1 mt-1">
                                 <span className="flex items-center gap-1">
                                   <Icon icon="lucide:scale" className="w-3 h-3" />
-                                  Split difference
+                                  Net split
                                 </span>
                                 <span className={`tabular-nums ${b.splitBalance > 0 ? "text-green-600" : "text-red-500"}`}>
                                   {b.splitBalance > 0 ? "+" : ""}{formatCurrency(b.splitBalance)}
@@ -544,7 +544,7 @@ export default async function SharePage({ params }: SharePageProps) {
       <footer className="border-t mt-12">
         <div className="max-w-4xl mx-auto px-6 py-5 flex items-center justify-between text-sm text-muted-foreground">
           <span>Trip Planner — shared view</span>
-          <Link href="/auth/register" className="text-primary hover:underline">
+          <Link href="/register" className="text-primary hover:underline">
             Plan your own trip →
           </Link>
         </div>

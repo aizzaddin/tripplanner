@@ -13,13 +13,13 @@ type ItineraryTodo = { order: number; name: string; assignedTo?: string }
 export default async function ItineraryPage({ params }: ItineraryPageProps) {
   const session = await auth()
   if (!session?.user?.id) {
-    redirect("/auth/login")
+    redirect("/login")
   }
 
   const { id } = await params
 
   const trip = await prisma.trip.findFirst({
-    where: { id, userId: session.user.id },
+    where: { id, OR: [{ userId: session.user.id }, { collaborators: { some: { userId: session.user.id } } }] },
   })
 
   if (!trip) {

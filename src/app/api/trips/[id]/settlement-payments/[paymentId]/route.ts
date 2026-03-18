@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { requireAuth, requireTripOwnership } from "@/lib/api-helpers"
+import { requireAuth, requireTripAccess } from "@/lib/api-helpers"
 
 export async function DELETE(
   _req: NextRequest,
@@ -10,7 +10,7 @@ export async function DELETE(
   if (error) return error
 
   const { id, paymentId } = await params
-  const { error: tripError } = await requireTripOwnership(id, user!.id)
+  const { error: tripError } = await requireTripAccess(id, user!.id)
   if (tripError) return tripError
 
   await prisma.settlementPayment.delete({ where: { id: paymentId } })

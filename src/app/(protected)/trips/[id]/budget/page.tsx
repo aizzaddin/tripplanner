@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { computeActualCosts } from "@/lib/business/budget"
 import BudgetView from "@/components/budget-view"
 import type { BudgetPlanWithActual } from "@/types/api"
+import { EXPENSE_CATEGORIES } from "@/lib/constants"
 
 interface BudgetPageProps {
   params: Promise<{ id: string }>
@@ -12,13 +13,14 @@ interface BudgetPageProps {
 export default async function BudgetPage({ params }: BudgetPageProps) {
   const session = await auth()
   if (!session?.user?.id) {
-    redirect("/auth/login")
+    redirect("/login")
   }
 
   const { id } = await params
 
   const trip = await prisma.trip.findFirst({
-    where: { id, userId: session.user.id },
+    where: { id, OR: [{ userId: session.user.id }, { collaborators: { some: { userId: session.user.id } } }] },
+    select: { id: true, currency: true, categories: true },
   })
 
   if (!trip) {
@@ -61,11 +63,17 @@ export default async function BudgetPage({ params }: BudgetPageProps) {
       })),
   ].sort((a, b) => a.category.localeCompare(b.category))
 
+  const tripCategories =
+    Array.isArray(trip!.categories) && (trip!.categories as string[]).length > 0
+      ? (trip!.categories as string[])
+      : EXPENSE_CATEGORIES
+
   return (
     <BudgetView
       tripId={id}
       currency={trip!.currency}
       initialBudget={budgetWithActual}
+      categories={tripCategories}
     />
   )
 }

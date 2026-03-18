@@ -7,6 +7,7 @@ import ActiveTabLink from "./active-tab-link"
 import { Icon } from "@iconify/react"
 import ShareButton from "@/components/share-button"
 import TripHeaderEditor from "@/components/trip-header-editor"
+import CollaboratorsManager from "@/components/collaborators-manager"
 
 interface TripLayoutProps {
   children: React.ReactNode
@@ -19,24 +20,39 @@ const tabs = [
   { label: "Itinerary", icon: "lucide:map",          href: (id: string) => `/trips/${id}/itinerary` },
   { label: "To-Do",     icon: "lucide:check-square", href: (id: string) => `/trips/${id}/todos` },
   { label: "Packing",   icon: "lucide:backpack",     href: (id: string) => `/trips/${id}/packing` },
+  { label: "Settings",  icon: "lucide:settings-2",   href: (id: string) => `/trips/${id}/settings` },
 ]
 
 export default async function TripLayout({ children, params }: TripLayoutProps) {
   const session = await auth()
   if (!session?.user?.id) {
-    redirect("/auth/login")
+    redirect("/login")
   }
 
   const { id } = await params
 
   const trip = await prisma.trip.findFirst({
-    where: { id, userId: session.user.id },
-    include: { members: true },
+    where: {
+      id,
+      OR: [
+        { userId: session.user.id },
+        { collaborators: { some: { userId: session.user.id } } },
+      ],
+    },
+    include: {
+      members: true,
+      collaborators: {
+        include: { user: { select: { id: true, name: true, email: true } } },
+      },
+      user: { select: { id: true, name: true } },
+    },
   })
 
   if (!trip) {
     redirect("/dashboard")
   }
+
+  const isOwner = trip.userId === session.user.id
 
   return (
     <div className="flex flex-col min-h-full">
@@ -82,7 +98,14 @@ export default async function TripLayout({ children, params }: TripLayoutProps) 
               </span>
             </div>
           </div>
-          <div className="shrink-0">
+          <div className="shrink-0 flex items-center gap-2">
+            <CollaboratorsManager
+              tripId={id}
+              isOwner={isOwner}
+              initialCollaborators={trip.collaborators}
+              ownerId={trip.userId}
+              ownerName={trip.user.name}
+            />
             <ShareButton tripId={id} initialShareToken={trip.shareToken ?? null} />
           </div>
         </div>

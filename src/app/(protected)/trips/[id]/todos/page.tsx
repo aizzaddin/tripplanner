@@ -10,13 +10,13 @@ interface TodosPageProps {
 export default async function TodosPage({ params }: TodosPageProps) {
   const session = await auth()
   if (!session?.user?.id) {
-    redirect("/auth/login")
+    redirect("/login")
   }
 
   const { id } = await params
 
   const trip = await prisma.trip.findFirst({
-    where: { id, userId: session.user.id },
+    where: { id, OR: [{ userId: session.user.id }, { collaborators: { some: { userId: session.user.id } } }] },
     include: { members: true },
   })
 

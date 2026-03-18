@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useGsapEntrance } from "@/lib/hooks/use-gsap-entrance"
 import type { BudgetPlanWithActual } from "@/types/api"
 import { EXPENSE_CATEGORIES } from "@/lib/constants"
 import { Button } from "@/components/ui/button"
@@ -28,9 +29,11 @@ interface BudgetViewProps {
   tripId: string
   currency: string
   initialBudget: BudgetPlanWithActual[]
+  categories?: string[]
 }
 
-export default function BudgetView({ tripId, currency, initialBudget }: BudgetViewProps) {
+export default function BudgetView({ tripId, currency, initialBudget, categories = EXPENSE_CATEGORIES }: BudgetViewProps) {
+  const containerRef = useGsapEntrance()
   const [budget, setBudget] = useState(initialBudget)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editValue, setEditValue] = useState("")
@@ -103,9 +106,9 @@ export default function BudgetView({ tripId, currency, initialBudget }: BudgetVi
     `${currency} ${amount.toLocaleString("id-ID", { minimumFractionDigits: 0 })}`
 
   return (
-    <div className="space-y-6">
+    <div ref={containerRef} className="space-y-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="gsap-enter grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Planned</CardTitle>
@@ -135,7 +138,7 @@ export default function BudgetView({ tripId, currency, initialBudget }: BudgetVi
       </div>
 
       {/* Add budget row */}
-      <Card>
+      <Card className="gsap-enter">
         <CardHeader>
           <CardTitle className="text-base">Add Budget Plan</CardTitle>
         </CardHeader>
@@ -146,7 +149,7 @@ export default function BudgetView({ tripId, currency, initialBudget }: BudgetVi
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
-                {EXPENSE_CATEGORIES.map((c) => (
+                {categories.map((c) => (
                   <SelectItem key={c} value={c}>{c}</SelectItem>
                 ))}
               </SelectContent>
@@ -167,7 +170,7 @@ export default function BudgetView({ tripId, currency, initialBudget }: BudgetVi
       </Card>
 
       {/* Budget Table */}
-      <Card>
+      <Card className="gsap-enter">
         <CardContent className="p-0">
           {budget.length === 0 ? (
             <div className="flex flex-col items-center py-12 text-muted-foreground text-sm gap-2">

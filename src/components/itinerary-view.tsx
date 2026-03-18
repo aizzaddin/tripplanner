@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { format, addDays } from "date-fns"
+import { useGsapEntrance } from "@/lib/hooks/use-gsap-entrance"
 import { Icon } from "@iconify/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -38,6 +39,7 @@ interface ItineraryViewProps {
 }
 
 export default function ItineraryView({ tripId, startDate, initialDays }: ItineraryViewProps) {
+  const containerRef = useGsapEntrance()
   const [days, setDays] = useState(initialDays)
   const [saving, setSaving] = useState<number | null>(null)
   const [editingDays, setEditingDays] = useState<Set<number>>(new Set())
@@ -195,8 +197,9 @@ export default function ItineraryView({ tripId, startDate, initialDays }: Itiner
   }
 
   return (
+    <div ref={containerRef}>
     <Tabs defaultValue={`day-1`}>
-      <TabsList className="flex flex-wrap h-auto gap-1 mb-6">
+      <TabsList className="gsap-enter flex flex-wrap h-auto gap-1 mb-6">
         {days.map((day) => (
           <TabsTrigger key={day.dayNumber} value={`day-${day.dayNumber}`} className="text-xs">
             Day {day.dayNumber}
@@ -211,7 +214,7 @@ export default function ItineraryView({ tripId, startDate, initialDays }: Itiner
 
         return (
           <TabsContent key={day.dayNumber} value={`day-${day.dayNumber}`}>
-            <div className="space-y-4">
+            <div className="gsap-enter space-y-4">
               {/* Header */}
               <div className="flex items-center justify-between">
                 <div>
@@ -390,5 +393,6 @@ export default function ItineraryView({ tripId, startDate, initialDays }: Itiner
         )
       })}
     </Tabs>
+    </div>
   )
 }

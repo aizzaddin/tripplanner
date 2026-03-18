@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useGsapEntrance } from "@/lib/hooks/use-gsap-entrance"
 import { format } from "date-fns"
 import { computeTotal } from "@/lib/business/expense"
 import type { BalanceEntry, Settlement } from "@/lib/business/expense"
@@ -75,6 +76,8 @@ interface ExpensesViewProps {
   settlements: Settlement[]
   settlementPayments: SettlementPaymentRecord[]
   totalExpenses: number
+  categories: string[]
+  paymentMethods: string[]
 }
 
 export default function ExpensesView({
@@ -86,7 +89,10 @@ export default function ExpensesView({
   settlements: initialSettlements,
   settlementPayments: initialPayments,
   totalExpenses: initialTotal,
+  categories,
+  paymentMethods,
 }: ExpensesViewProps) {
+  const containerRef = useGsapEntrance()
   const [expenses, setExpenses] = useState(initialExpenses)
   const [members, setMembers] = useState(initialMembers)
   const [balances, setBalances] = useState(initialBalances)
@@ -213,9 +219,9 @@ export default function ExpensesView({
     `${currency} ${amount.toLocaleString("id-ID", { minimumFractionDigits: 0 })}`
 
   return (
-    <div className="space-y-6">
+    <div ref={containerRef} className="space-y-6">
       {/* Members section */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="gsap-enter flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-medium text-muted-foreground">Members:</span>
           {members.map((m) => (
@@ -247,7 +253,7 @@ export default function ExpensesView({
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="gsap-enter grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Expense Table */}
         <div className="lg:col-span-2">
           <Card>
@@ -402,7 +408,7 @@ export default function ExpensesView({
                             <div className="flex items-center justify-between text-xs text-muted-foreground">
                               <span className="flex items-center gap-1">
                                 <Icon icon="lucide:users" className="w-3 h-3" />
-                                Split share
+                                Pay back
                               </span>
                               <span className="tabular-nums">{formatCurrency(b.splitShare)}</span>
                             </div>
@@ -411,7 +417,7 @@ export default function ExpensesView({
                             <div className="flex items-center justify-between text-xs text-muted-foreground border-t pt-1 mt-1">
                               <span className="flex items-center gap-1">
                                 <Icon icon="lucide:split" className="w-3 h-3" />
-                                Split forwarded
+                                Get back
                               </span>
                               <span className="tabular-nums">{formatCurrency(b.splitPaid)}</span>
                             </div>
@@ -420,7 +426,7 @@ export default function ExpensesView({
                             <div className="flex items-center justify-between text-xs font-medium">
                               <span className="flex items-center gap-1">
                                 <Icon icon="lucide:scale" className="w-3 h-3" />
-                                Split difference
+                                Net split
                               </span>
                               <span className={`tabular-nums ${b.splitBalance > 0 ? "text-green-600" : b.splitBalance < 0 ? "text-red-500" : "text-muted-foreground"}`}>
                                 {b.splitBalance > 0 ? "+" : ""}{formatCurrency(b.splitBalance)}
@@ -603,6 +609,8 @@ export default function ExpensesView({
           <ExpenseForm
             tripId={tripId}
             members={members}
+            categories={categories}
+            enabledPaymentMethods={paymentMethods}
             onSubmit={handleAddExpense}
             loading={formLoading}
             error={formError}
@@ -621,6 +629,8 @@ export default function ExpensesView({
             <ExpenseForm
               tripId={tripId}
               members={members}
+              categories={categories}
+              enabledPaymentMethods={paymentMethods}
               defaultValues={{
                 date: format(new Date(editExpense.date), "yyyy-MM-dd"),
                 category: editExpense.category,

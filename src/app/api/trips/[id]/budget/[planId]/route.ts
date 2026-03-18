@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { requireAuth, requireTripOwnership } from "@/lib/api-helpers"
+import { requireAuth, requireTripAccess } from "@/lib/api-helpers"
 import { updateBudgetPlanSchema } from "@/lib/validations/budget"
 
 export async function PUT(
@@ -12,7 +12,7 @@ export async function PUT(
 
   const { id, planId } = await params
 
-  const { trip, error: tripError } = await requireTripOwnership(id, user!.id)
+  const { trip, error: tripError } = await requireTripAccess(id, user!.id)
   if (tripError) return tripError
 
   try {
@@ -57,7 +57,7 @@ export async function DELETE(
 
   const { id, planId } = await params
 
-  const { trip, error: tripError } = await requireTripOwnership(id, user!.id)
+  const { trip, error: tripError } = await requireTripAccess(id, user!.id)
   if (tripError) return tripError
 
   try {

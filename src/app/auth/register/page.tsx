@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useForm } from "react-hook-form"
+import { useGsapEntrance } from "@/lib/hooks/use-gsap-entrance"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
@@ -14,6 +15,7 @@ import { Label } from "@/components/ui/label"
 import { Icon } from "@iconify/react"
 
 export default function RegisterPage() {
+  const containerRef = useGsapEntrance()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -57,7 +59,7 @@ export default function RegisterPage() {
       })
       if (result?.error) {
         setError("Account created but sign in failed. Please try logging in.")
-        router.push("/auth/login")
+        router.push("/login")
       } else {
         router.push("/dashboard")
       }
@@ -69,14 +71,14 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+    <div ref={containerRef} className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
+        <div className="gsap-enter text-center mb-8">
           <h1 className="text-3xl font-bold tracking-tight">Trip Planner</h1>
           <p className="text-muted-foreground mt-2">Start planning your adventures</p>
         </div>
 
-        <Card>
+        <Card className="gsap-enter">
           <CardHeader>
             <CardTitle>Create an account</CardTitle>
             <CardDescription>Enter your details to get started</CardDescription>
@@ -215,7 +217,7 @@ export default function RegisterPage() {
               </Button>
               <p className="text-sm text-muted-foreground text-center">
                 Already have an account?{" "}
-                <Link href="/auth/login" className="text-primary font-medium hover:underline">
+                <Link href="/login" className="text-primary font-medium hover:underline">
                   Sign in
                 </Link>
               </p>

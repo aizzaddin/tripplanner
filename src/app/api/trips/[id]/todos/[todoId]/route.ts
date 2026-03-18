@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { requireAuth, requireTripOwnership } from "@/lib/api-helpers"
+import { requireAuth, requireTripAccess } from "@/lib/api-helpers"
 import { updateTodoSchema } from "@/lib/validations/todo"
 
 export async function PUT(
@@ -12,7 +12,7 @@ export async function PUT(
 
   const { id, todoId } = await params
 
-  const { trip, error: tripError } = await requireTripOwnership(id, user!.id)
+  const { trip, error: tripError } = await requireTripAccess(id, user!.id)
   if (tripError) return tripError
 
   try {
@@ -64,7 +64,7 @@ export async function DELETE(
 
   const { id, todoId } = await params
 
-  const { trip, error: tripError } = await requireTripOwnership(id, user!.id)
+  const { trip, error: tripError } = await requireTripAccess(id, user!.id)
   if (tripError) return tripError
 
   try {

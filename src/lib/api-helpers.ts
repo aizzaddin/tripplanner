@@ -10,11 +10,31 @@ export async function requireAuth() {
   return { user: session.user, error: null }
 }
 
+/** Strict ownership check — use for destructive/admin operations (e.g. delete trip, manage collaborators) */
 export async function requireTripOwnership(tripId: string, userId: string) {
   const trip = await prisma.trip.findFirst({
     where: {
       id: tripId,
       userId,
+    },
+  })
+
+  if (!trip) {
+    return { trip: null, error: NextResponse.json({ error: "Trip not found" }, { status: 404 }) }
+  }
+
+  return { trip, error: null }
+}
+
+/** Access check — allows both the trip owner and collaborators */
+export async function requireTripAccess(tripId: string, userId: string) {
+  const trip = await prisma.trip.findFirst({
+    where: {
+      id: tripId,
+      OR: [
+        { userId },
+        { collaborators: { some: { userId } } },
+      ],
     },
   })
 

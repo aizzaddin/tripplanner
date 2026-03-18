@@ -14,7 +14,7 @@ export default async function ProtectedLayout({
   const session = await auth()
 
   if (!session?.user) {
-    redirect("/auth/login")
+    redirect("/login")
   }
 
   // Check role from DB — reliable regardless of JWT state
@@ -70,7 +70,10 @@ export default async function ProtectedLayout({
         </div>
 
         <div className="p-4 border-t">
-          <div className="flex items-center gap-3 mb-3">
+          <Link
+            href="/settings"
+            className="flex items-center gap-3 mb-3 rounded-lg px-2 py-1.5 -mx-2 hover:bg-accent transition-colors group"
+          >
             <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-medium shrink-0">
               {session.user.name?.[0]?.toUpperCase() ?? "U"}
             </div>
@@ -78,11 +81,12 @@ export default async function ProtectedLayout({
               <p className="text-sm font-medium truncate">{session.user.name}</p>
               <p className="text-xs text-muted-foreground truncate">{session.user.email}</p>
             </div>
-          </div>
+            <Icon icon="lucide:settings" className="w-3.5 h-3.5 text-muted-foreground shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </Link>
           <form
             action={async () => {
               "use server"
-              await signOut({ redirectTo: "/auth/login" })
+              await signOut({ redirectTo: "/login" })
             }}
           >
             <Button variant="outline" size="sm" type="submit" className="w-full gap-2">

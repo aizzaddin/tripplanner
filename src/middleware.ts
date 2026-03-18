@@ -9,15 +9,17 @@ export default auth((req) => {
   const isAuthenticated = !!req.auth
   const token = req.auth
 
-  const isAuthPage = nextUrl.pathname.startsWith("/auth")
+  const isAuthPage =
+    nextUrl.pathname === "/login" || nextUrl.pathname === "/register"
   const isProtectedPage =
     nextUrl.pathname.startsWith("/dashboard") ||
     nextUrl.pathname.startsWith("/trips") ||
-    nextUrl.pathname.startsWith("/admin")
+    nextUrl.pathname.startsWith("/admin") ||
+    nextUrl.pathname.startsWith("/settings")
   const isPendingPage = nextUrl.pathname === "/pending"
 
   if (isProtectedPage && !isAuthenticated) {
-    return NextResponse.redirect(new URL("/auth/login", nextUrl))
+    return NextResponse.redirect(new URL("/login", nextUrl))
   }
 
   if (isAuthenticated) {

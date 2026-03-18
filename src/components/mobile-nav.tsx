@@ -103,7 +103,11 @@ export default function MobileNav({ userName, userEmail, isAdmin }: MobileNavPro
 
         {/* User section */}
         <div className="p-4 border-t">
-          <div className="flex items-center gap-3 mb-3">
+          <Link
+            href="/settings"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-3 mb-3 rounded-lg px-2 py-1.5 -mx-2 hover:bg-accent transition-colors group"
+          >
             <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-medium shrink-0">
               {userName[0]?.toUpperCase() ?? "U"}
             </div>
@@ -111,12 +115,13 @@ export default function MobileNav({ userName, userEmail, isAdmin }: MobileNavPro
               <p className="text-sm font-medium truncate">{userName}</p>
               <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
             </div>
-          </div>
+            <Icon icon="lucide:settings" className="w-3.5 h-3.5 text-muted-foreground shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </Link>
           <Button
             variant="outline"
             size="sm"
             className="w-full gap-2"
-            onClick={() => signOut({ callbackUrl: "/auth/login" })}
+            onClick={() => signOut({ callbackUrl: "/login" })}
           >
             <Icon icon="lucide:log-out" className="w-3.5 h-3.5" />
             Sign out

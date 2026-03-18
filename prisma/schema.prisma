@@ -28,7 +28,8 @@ model User {
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
-  trips Trip[]
+  trips                Trip[]
+  tripCollaborations   TripCollaborator[]
 
   @@map("users")
 }
@@ -64,6 +65,10 @@ model Trip {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  categories     Json @default("[]")
+  paymentMethods Json @default("[]")
+
+  collaborators       TripCollaborator[]
   members             Member[]
   expenses            Expense[]
   budgetPlans         BudgetPlan[]
@@ -73,6 +78,20 @@ model Trip {
   settlementPayments  SettlementPayment[]
 
   @@map("trips")
+}
+
+model TripCollaborator {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  tripId String
+  trip   Trip   @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tripId, userId])
+  @@map("trip_collaborators")
 }
 
 enum MemberCategory {

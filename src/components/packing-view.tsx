@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useGsapEntrance } from "@/lib/hooks/use-gsap-entrance"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -44,6 +45,7 @@ interface PackingViewProps {
 }
 
 export default function PackingView({ tripId, members, initialItems }: PackingViewProps) {
+  const containerRef = useGsapEntrance()
   const [items, setItems] = useState(initialItems)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -117,8 +119,8 @@ export default function PackingView({ tripId, members, initialItems }: PackingVi
   const packedItems = items.filter((i) => i.isDone).length
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div ref={containerRef} className="space-y-6">
+      <div className="gsap-enter flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold">Packing List</h2>
           <p className="text-sm text-muted-foreground">
@@ -133,7 +135,7 @@ export default function PackingView({ tripId, members, initialItems }: PackingVi
           No packing items yet. Add your first one!
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="gsap-enter space-y-4">
           {/* Unassigned items */}
           {grouped["unassigned"] && grouped["unassigned"].length > 0 && (
             <Card>

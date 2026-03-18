@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { computeBalances, computeSettlements, computeTotal, adjustBalancesForPayments } from "@/lib/business/expense"
 
 import ExpensesView from "@/components/expenses-view"
+import { EXPENSE_CATEGORIES, PAYMENT_METHODS } from "@/lib/constants"
 
 interface ExpensesPageProps {
   params: Promise<{ id: string }>
@@ -11,12 +12,12 @@ interface ExpensesPageProps {
 
 export default async function ExpensesPage({ params }: ExpensesPageProps) {
   const session = await auth()
-  if (!session?.user?.id) redirect("/auth/login")
+  if (!session?.user?.id) redirect("/login")
 
   const { id } = await params
 
   const trip = await prisma.trip.findFirst({
-    where: { id, userId: session.user.id },
+    where: { id, OR: [{ userId: session.user.id }, { collaborators: { some: { userId: session.user.id } } }] },
     include: { members: true },
   })
   if (!trip) redirect("/dashboard")
@@ -54,10 +55,22 @@ export default async function ExpensesPage({ params }: ExpensesPageProps) {
   const settlements = computeSettlements(expensesForCalc, trip.members, settlementPayments)
   const totalExpenses = expenses.reduce((sum, e) => sum + computeTotal(e.qty, e.unitCost), 0)
 
+  const tripCategories =
+    Array.isArray(trip.categories) && trip.categories.length > 0
+      ? (trip.categories as string[])
+      : EXPENSE_CATEGORIES
+
+  const tripPaymentMethods =
+    Array.isArray(trip.paymentMethods) && trip.paymentMethods.length > 0
+      ? (trip.paymentMethods as string[])
+      : PAYMENT_METHODS.map((p) => p.value)
+
   return (
     <ExpensesView
       tripId={id}
       currency={trip.currency}
+      categories={tripCategories}
+      paymentMethods={tripPaymentMethods}
       expenses={expenses.map((e) => ({
         id: e.id,
         date: e.date.toISOString(),

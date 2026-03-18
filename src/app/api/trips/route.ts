@@ -9,12 +9,15 @@ export async function GET() {
 
   try {
     const trips = await prisma.trip.findMany({
-      where: { userId: user!.id },
+      where: {
+        OR: [
+          { userId: user!.id },
+          { collaborators: { some: { userId: user!.id } } },
+        ],
+      },
       orderBy: { startDate: "desc" },
       include: {
-        _count: {
-          select: { members: true },
-        },
+        _count: { select: { members: true } },
       },
     })
 
