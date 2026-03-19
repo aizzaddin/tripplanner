@@ -218,7 +218,7 @@ export default function ItineraryView({ tripId, startDate, initialDays }: Itiner
               {/* Header */}
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold">Day {day.dayNumber}</h2>
+                  <h2 className="text-lg font-black tracking-tight font-sans">Day {day.dayNumber}</h2>
                   <p className="text-sm text-muted-foreground">{format(dayDate, "EEEE, MMMM d, yyyy")}</p>
                 </div>
                 {editing ? (

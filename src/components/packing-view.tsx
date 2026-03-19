@@ -122,7 +122,7 @@ export default function PackingView({ tripId, members, initialItems }: PackingVi
     <div ref={containerRef} className="space-y-6">
       <div className="gsap-enter flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold">Packing List</h2>
+          <h2 className="text-lg font-black tracking-tight font-sans">Packing List</h2>
           <p className="text-sm text-muted-foreground">
             {packedItems} / {totalItems} packed
           </p>

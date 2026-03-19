@@ -29,12 +29,12 @@ export default async function ProtectedLayout({
       {/* Sidebar — desktop only */}
       <aside className="hidden md:flex w-64 bg-card border-r flex-col shrink-0 sticky top-0 h-screen overflow-y-auto">
         <div className="p-6 border-b">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <Icon icon="lucide:map-pin" className="w-4 h-4 text-primary-foreground" />
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shrink-0">
+              <Icon icon="lucide:split" className="w-4 h-4 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-sm font-bold tracking-tight leading-none">Trip Planner</h1>
+              <h1 className="text-sm font-black tracking-tight leading-none font-sans">TripSplit</h1>
               <p className="text-xs text-muted-foreground mt-0.5">Plan your adventures</p>
             </div>
           </div>

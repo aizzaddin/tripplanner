@@ -140,7 +140,7 @@ export default function BudgetView({ tripId, currency, initialBudget, categories
       {/* Add budget row */}
       <Card className="gsap-enter">
         <CardHeader>
-          <CardTitle className="text-base">Add Budget Plan</CardTitle>
+          <CardTitle className="text-base font-black font-sans">Add Budget Plan</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col sm:flex-row gap-3">

@@ -259,7 +259,7 @@ export default function ExpensesView({
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base">Expenses</CardTitle>
+                <CardTitle className="text-base font-black font-sans">Expenses</CardTitle>
                 <span className="text-sm text-muted-foreground">
                   Total: {formatCurrency(totalExpenses)}
                 </span>
@@ -366,7 +366,7 @@ export default function ExpensesView({
           {/* Per-person spending breakdown */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Spending per Person</CardTitle>
+              <CardTitle className="text-base font-black font-sans">Spending per Person</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {balances.length === 0 ? (

@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { useForm } from "react-hook-form"
-import { useGsapEntrance } from "@/lib/hooks/use-gsap-entrance"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
@@ -15,7 +14,6 @@ import { Label } from "@/components/ui/label"
 import { Icon } from "@iconify/react"
 
 export default function RegisterPage() {
-  const containerRef = useGsapEntrance()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -71,19 +69,14 @@ export default function RegisterPage() {
   }
 
   return (
-    <div ref={containerRef} className="min-h-screen flex items-center justify-center bg-background px-4">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md">
-        <div className="gsap-enter text-center mb-8">
-          <div className="flex items-center justify-center gap-2.5 mb-3">
-            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shrink-0">
-              <Icon icon="lucide:split" className="w-4.5 h-4.5 text-primary-foreground" />
-            </div>
-            <h1 className="text-3xl font-black tracking-tight font-sans">TripSplit</h1>
-          </div>
-          <p className="text-muted-foreground">Your next trip starts here.</p>
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold tracking-tight">Trip Planner</h1>
+          <p className="text-muted-foreground mt-2">Start planning your adventures</p>
         </div>
 
-        <Card className="gsap-enter">
+        <Card>
           <CardHeader>
             <CardTitle>Create an account</CardTitle>
             <CardDescription>Enter your details to get started</CardDescription>

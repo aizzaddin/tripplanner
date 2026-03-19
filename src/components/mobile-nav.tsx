@@ -20,10 +20,10 @@ export default function MobileNav({ userName, userEmail, isAdmin }: MobileNavPro
       {/* Mobile top bar */}
       <header className="md:hidden flex items-center justify-between px-4 h-14 bg-card border-b shrink-0">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-            <Icon icon="lucide:map-pin" className="w-3.5 h-3.5 text-primary-foreground" />
+          <div className="w-7 h-7 rounded-xl bg-primary flex items-center justify-center">
+            <Icon icon="lucide:split" className="w-3.5 h-3.5 text-primary-foreground" />
           </div>
-          <span className="text-sm font-bold tracking-tight">Trip Planner</span>
+          <span className="text-sm font-black tracking-tight font-sans">TripSplit</span>
         </div>
         <button
           onClick={() => setOpen(true)}
@@ -50,12 +50,12 @@ export default function MobileNav({ userName, userEmail, isAdmin }: MobileNavPro
       >
         {/* Drawer header */}
         <div className="p-5 border-b flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <Icon icon="lucide:map-pin" className="w-4 h-4 text-primary-foreground" />
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shrink-0">
+              <Icon icon="lucide:split" className="w-4 h-4 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-sm font-bold tracking-tight leading-none">Trip Planner</h1>
+              <h1 className="text-sm font-black tracking-tight leading-none font-sans">TripSplit</h1>
               <p className="text-xs text-muted-foreground mt-0.5">Plan your adventures</p>
             </div>
           </div>

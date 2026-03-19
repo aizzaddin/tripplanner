@@ -172,7 +172,7 @@ export default function TodosView({ tripId, members, initialTodos }: TodosViewPr
     <div ref={containerRef} className="space-y-6">
       <div className="gsap-enter flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold">To-Do List</h2>
+          <h2 className="text-lg font-black tracking-tight font-sans">To-Do List</h2>
           <p className="text-sm text-muted-foreground">
             {todos.filter((t) => t.isDone).length} / {todos.length} completed
           </p>

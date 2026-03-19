@@ -71,7 +71,7 @@ export default async function TripLayout({ children, params }: TripLayoutProps) 
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 space-y-1">
             <div className="flex items-center gap-2">
-              <h1 className="text-xl md:text-2xl font-bold truncate">{trip.name}</h1>
+              <h1 className="text-xl md:text-2xl font-black tracking-tight font-sans truncate">{trip.name}</h1>
               <TripHeaderEditor
                 tripId={id}
                 name={trip.name}
