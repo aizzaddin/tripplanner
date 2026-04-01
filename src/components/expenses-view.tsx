@@ -109,6 +109,7 @@ export default function ExpensesView({
   const [addMemberOpen, setAddMemberOpen] = useState(false)
   const [formLoading, setFormLoading] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null)
   const router = useRouter()
 
   const refreshData = async () => {
@@ -381,7 +382,12 @@ export default function ExpensesView({
                       <div key={b.memberId} className="space-y-2">
                         {/* Name + total spending */}
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-semibold">{b.memberName}</span>
+                          <button
+                            onClick={() => setSelectedMemberId(b.memberId)}
+                            className="text-sm font-semibold hover:underline hover:text-primary transition-colors text-left"
+                          >
+                            {b.memberName}
+                          </button>
                           <span className="text-sm font-bold tabular-nums">
                             {formatCurrency(b.share)}
                           </span>
@@ -650,6 +656,137 @@ export default function ExpensesView({
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Member Expense Detail Dialog */}
+      {(() => {
+        const member = selectedMemberId ? members.find(m => m.id === selectedMemberId) : null
+        if (!member) return null
+
+        const personalExpenses = expenses.filter(
+          e => e.paymentStatus === "PERSONAL" && e.paidById === selectedMemberId
+        )
+        const splitPaidExpenses = expenses.filter(
+          e => e.paymentStatus === "SPLIT_EQUAL" && e.paidById === selectedMemberId
+        )
+        const splitOwedExpenses = expenses.filter(
+          e =>
+            e.paymentStatus === "SPLIT_EQUAL" &&
+            e.paidById !== selectedMemberId &&
+            e.splitWith.some(s => s.memberId === selectedMemberId)
+        )
+
+        return (
+          <Dialog open={!!selectedMemberId} onOpenChange={(open) => !open && setSelectedMemberId(null)}>
+            <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <MemberAvatar name={member.name} color={member.color} size="sm" />
+                  Rincian Pengeluaran — {member.name}
+                </DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-4 pt-1">
+                {/* Personal */}
+                {personalExpenses.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1">
+                      <Icon icon="lucide:user" className="w-3 h-3" />
+                      Personal ({personalExpenses.length})
+                    </p>
+                    <div className="space-y-1">
+                      {personalExpenses.map(e => {
+                        const total = computeTotal(e.qty, e.unitCost)
+                        return (
+                          <div key={e.id} className="flex items-center justify-between text-sm px-2 py-1.5 rounded bg-muted/40">
+                            <div className="flex flex-col">
+                              <span className="font-medium">{e.description}</span>
+                              <span className="text-xs text-muted-foreground">{e.category} · {format(new Date(e.date), "MMM d")}</span>
+                            </div>
+                            <span className="tabular-nums font-medium shrink-0 ml-3">{formatCurrency(total)}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                    <div className="flex justify-between text-xs font-semibold mt-1 px-2">
+                      <span>Subtotal</span>
+                      <span>{formatCurrency(personalExpenses.reduce((s, e) => s + computeTotal(e.qty, e.unitCost), 0))}</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Split bills they paid */}
+                {splitPaidExpenses.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1">
+                      <Icon icon="lucide:split" className="w-3 h-3" />
+                      Dibayar & Dibagi ({splitPaidExpenses.length})
+                    </p>
+                    <div className="space-y-1">
+                      {splitPaidExpenses.map(e => {
+                        const total = computeTotal(e.qty, e.unitCost)
+                        const sharePerPerson = total / e.splitWith.length
+                        return (
+                          <div key={e.id} className="flex items-center justify-between text-sm px-2 py-1.5 rounded bg-muted/40">
+                            <div className="flex flex-col">
+                              <span className="font-medium">{e.description}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {e.category} · {format(new Date(e.date), "MMM d")} · {e.splitWith.length} orang
+                              </span>
+                            </div>
+                            <div className="text-right shrink-0 ml-3">
+                              <div className="tabular-nums font-medium">{formatCurrency(total)}</div>
+                              <div className="text-xs text-muted-foreground">bagian: {formatCurrency(sharePerPerson)}</div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                    <div className="flex justify-between text-xs font-semibold mt-1 px-2">
+                      <span>Total dibayar</span>
+                      <span>{formatCurrency(splitPaidExpenses.reduce((s, e) => s + computeTotal(e.qty, e.unitCost), 0))}</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Split bills they owe */}
+                {splitOwedExpenses.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1">
+                      <Icon icon="lucide:users" className="w-3 h-3" />
+                      Ikut Patungan ({splitOwedExpenses.length})
+                    </p>
+                    <div className="space-y-1">
+                      {splitOwedExpenses.map(e => {
+                        const total = computeTotal(e.qty, e.unitCost)
+                        const sharePerPerson = total / e.splitWith.length
+                        return (
+                          <div key={e.id} className="flex items-center justify-between text-sm px-2 py-1.5 rounded bg-muted/40">
+                            <div className="flex flex-col">
+                              <span className="font-medium">{e.description}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {e.category} · {format(new Date(e.date), "MMM d")} · dibayar {e.paidBy.name}
+                              </span>
+                            </div>
+                            <span className="tabular-nums font-medium shrink-0 ml-3">{formatCurrency(sharePerPerson)}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                    <div className="flex justify-between text-xs font-semibold mt-1 px-2">
+                      <span>Total tanggungan</span>
+                      <span>{formatCurrency(splitOwedExpenses.reduce((s, e) => s + computeTotal(e.qty, e.unitCost) / e.splitWith.length, 0))}</span>
+                    </div>
+                  </div>
+                )}
+
+                {personalExpenses.length === 0 && splitPaidExpenses.length === 0 && splitOwedExpenses.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">Belum ada pengeluaran.</p>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+        )
+      })()}
 
       {/* Add Member Dialog */}
       <Dialog open={addMemberOpen} onOpenChange={setAddMemberOpen}>
