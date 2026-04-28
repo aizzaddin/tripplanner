@@ -15,6 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Icon } from "@iconify/react"
+import ShareSpendingPerPerson from "@/components/share-spending-per-person"
 
 interface SharePageProps {
   params: Promise<{ token: string }>
@@ -333,79 +334,34 @@ export default async function SharePage({ params }: SharePageProps) {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Spending per Person</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {balances.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No members yet</p>
-                ) : (
-                  balances
-                    .slice()
-                    .sort((a, b) => b.share - a.share)
-                    .map((b) => {
-                      const pct = totalExpenses > 0 ? (b.share / totalExpenses) * 100 : 0
-                      return (
-                        <div key={b.memberId} className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-semibold">{b.memberName}</span>
-                            <span className="text-sm font-bold tabular-nums">
-                              {formatCurrency(b.share)}
-                            </span>
-                          </div>
-                          <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                            <div
-                              className="h-full rounded-full bg-primary transition-all"
-                              style={{ width: `${pct}%` }}
-                            />
-                          </div>
-                          <div className="space-y-1 pl-1">
-                            {b.personalPaid > 0 && (
-                              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                                <span className="flex items-center gap-1">
-                                  <Icon icon="lucide:user" className="w-3 h-3" />
-                                  Personal
-                                </span>
-                                <span className="tabular-nums">{formatCurrency(b.personalPaid)}</span>
-                              </div>
-                            )}
-                            {b.splitShare > 0 && (
-                              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                                <span className="flex items-center gap-1">
-                                  <Icon icon="lucide:users" className="w-3 h-3" />
-                                  Pay back
-                                </span>
-                                <span className="tabular-nums">{formatCurrency(b.splitShare)}</span>
-                              </div>
-                            )}
-                            {b.splitPaid > 0 && (
-                              <div className="flex items-center justify-between text-xs text-muted-foreground border-t pt-1 mt-1">
-                                <span className="flex items-center gap-1">
-                                  <Icon icon="lucide:split" className="w-3 h-3" />
-                                  Get back
-                                </span>
-                                <span className="tabular-nums">{formatCurrency(b.splitPaid)}</span>
-                              </div>
-                            )}
-                            {(b.splitPaid > 0 || b.splitShare > 0) && Math.abs(b.splitBalance) > 0.005 && (
-                              <div className="flex items-center justify-between text-xs font-medium border-t pt-1 mt-1">
-                                <span className="flex items-center gap-1">
-                                  <Icon icon="lucide:scale" className="w-3 h-3" />
-                                  Net split
-                                </span>
-                                <span className={`tabular-nums ${b.splitBalance > 0 ? "text-green-600" : "text-red-500"}`}>
-                                  {b.splitBalance > 0 ? "+" : ""}{formatCurrency(b.splitBalance)}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )
-                    })
-                )}
-              </CardContent>
-            </Card>
+            <ShareSpendingPerPerson
+              balances={balances}
+              expenses={trip.expenses.map(e => ({
+                id: e.id,
+                date: e.date.toISOString(),
+                category: e.category,
+                description: e.description,
+                qty: e.qty,
+                unitCost: e.unitCost,
+                paymentStatus: e.paymentStatus,
+                paidById: e.paidById,
+                paidBy: e.paidBy,
+                splitWith: e.splitWith.map(s => ({ memberId: s.memberId, member: s.member })),
+              }))}
+              members={trip.members}
+              currency={trip.currency}
+              totalExpenses={totalExpenses}
+              settlementPayments={settlementPayments.map(p => ({
+                id: p.id,
+                amount: p.amount,
+                note: p.note,
+                createdAt: p.createdAt.toISOString(),
+                fromMemberId: p.fromMemberId,
+                toMemberId: p.toMemberId,
+                fromMember: p.fromMember,
+                toMember: p.toMember,
+              }))}
+            />
 
             <div className="space-y-4">
               {(() => {

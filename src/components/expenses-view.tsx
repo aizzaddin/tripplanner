@@ -779,7 +779,62 @@ export default function ExpensesView({
                   </div>
                 )}
 
-                {personalExpenses.length === 0 && splitPaidExpenses.length === 0 && splitOwedExpenses.length === 0 && (
+                {/* Settlement payments sent by this member */}
+                {(() => {
+                  const sent = settlementPayments.filter(p => p.fromMemberId === selectedMemberId)
+                  const received = settlementPayments.filter(p => p.toMemberId === selectedMemberId)
+                  if (sent.length === 0 && received.length === 0) return null
+                  return (
+                    <div className="border-t pt-3 space-y-3">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                        <Icon icon="lucide:handshake" className="w-3 h-3" />
+                        Riwayat Pelunasan
+                      </p>
+                      {sent.length > 0 && (
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground font-medium">Dibayarkan ke orang lain</p>
+                          {sent.map(p => (
+                            <div key={p.id} className="flex items-center justify-between text-xs px-2 py-1.5 rounded bg-green-50 dark:bg-green-950/30">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <Icon icon="lucide:arrow-up-right" className="w-3 h-3 text-green-600 shrink-0" />
+                                <span>ke <span className="font-medium">{p.toMember.name}</span></span>
+                                {p.note && <span className="text-muted-foreground italic">· {p.note}</span>}
+                                <span className="text-muted-foreground/60">· {format(new Date(p.createdAt), "MMM d")}</span>
+                              </div>
+                              <span className="tabular-nums font-semibold text-green-700 dark:text-green-400 shrink-0 ml-2">{formatCurrency(p.amount)}</span>
+                            </div>
+                          ))}
+                          <div className="flex justify-between text-xs font-semibold px-2">
+                            <span>Total</span>
+                            <span className="text-green-700 dark:text-green-400">{formatCurrency(sent.reduce((s, p) => s + p.amount, 0))}</span>
+                          </div>
+                        </div>
+                      )}
+                      {received.length > 0 && (
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground font-medium">Diterima dari orang lain</p>
+                          {received.map(p => (
+                            <div key={p.id} className="flex items-center justify-between text-xs px-2 py-1.5 rounded bg-blue-50 dark:bg-blue-950/30">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <Icon icon="lucide:arrow-down-left" className="w-3 h-3 text-blue-600 shrink-0" />
+                                <span>dari <span className="font-medium">{p.fromMember.name}</span></span>
+                                {p.note && <span className="text-muted-foreground italic">· {p.note}</span>}
+                                <span className="text-muted-foreground/60">· {format(new Date(p.createdAt), "MMM d")}</span>
+                              </div>
+                              <span className="tabular-nums font-semibold text-blue-700 dark:text-blue-400 shrink-0 ml-2">{formatCurrency(p.amount)}</span>
+                            </div>
+                          ))}
+                          <div className="flex justify-between text-xs font-semibold px-2">
+                            <span>Total</span>
+                            <span className="text-blue-700 dark:text-blue-400">{formatCurrency(received.reduce((s, p) => s + p.amount, 0))}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })()}
+
+                {personalExpenses.length === 0 && splitPaidExpenses.length === 0 && splitOwedExpenses.length === 0 && settlementPayments.filter(p => p.fromMemberId === selectedMemberId || p.toMemberId === selectedMemberId).length === 0 && (
                   <p className="text-sm text-muted-foreground text-center py-4">Belum ada pengeluaran.</p>
                 )}
               </div>

@@ -186,7 +186,14 @@ export default function ExpenseForm({
 
       <div className="space-y-2">
         <Label>Paid By</Label>
-        <Select value={paidById} onValueChange={(val) => setValue("paidById", val)}>
+        <Select
+          value={paidById}
+          onValueChange={(val) => {
+            setValue("paidById", val)
+            // Auto-uncheck payer from split — payer fronts money but may not participate
+            setValue("splitWith", (splitWith ?? []).filter((id: string) => id !== val))
+          }}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Select who paid" />
           </SelectTrigger>
